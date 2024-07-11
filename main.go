@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -82,12 +83,36 @@ func main() {
 				f.SetCellValue("Sheet1", fmt.Sprintf("J%d", row), merchantCodeLine)
 
 				row++
+				fmt.Println(row)
+			} else {
+				reContact = regexp.MustCompile(`^(.*)，(\d+)，(.*)`)
+				contactInfo = reContact.FindStringSubmatch(addressLine)
+				name := contactInfo[1]
+				phone := contactInfo[2]
+				address := contactInfo[3]
+
+				// 提取商家编码和下一行信息
+				reMerchant := regexp.MustCompile(`商家编码：(.*)`)
+				merchantInfo := reMerchant.FindStringSubmatch(order)
+				merchantCodeLine := "未找到"
+				if len(merchantInfo) > 1 {
+					merchantCodeLine = strings.TrimSpace(merchantInfo[1])
+				}
+
+				// 设置单元格内容
+				f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), name)
+				f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), phone)
+				f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), address)
+				f.SetCellValue("Sheet1", fmt.Sprintf("J%d", row), merchantCodeLine)
+
+				row++
 			}
 		}
 	}
-
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("orders_%s.xlsx", timestamp)
 	// 保存 Excel 文件
-	if err := f.SaveAs("orders.xlsx"); err != nil {
+	if err := f.SaveAs(filename); err != nil {
 		fmt.Println("Error saving file:", err)
 	}
 }
