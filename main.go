@@ -57,6 +57,10 @@ func main() {
 		// 提取地址和联系人信息
 		reAddress := regexp.MustCompile(`--\n(.*)\n`)
 		addressInfo := reAddress.FindStringSubmatch(order)
+		if addressInfo[1] == "已修改地址" {
+			reAddress = regexp.MustCompile(`--\n.*\n(.*)\n`)
+			addressInfo = reAddress.FindStringSubmatch(order)
+		}
 		if len(addressInfo) > 1 {
 			addressLine := strings.TrimSpace(addressInfo[1])
 
@@ -93,10 +97,17 @@ func main() {
 
 				// 提取商家编码和下一行信息
 				reMerchant := regexp.MustCompile(`商家编码：(.*)`)
-				merchantInfo := reMerchant.FindStringSubmatch(order)
+				merchantInfos := reMerchant.FindAllStringSubmatch(order, -1)
 				merchantCodeLine := "未找到"
-				if len(merchantInfo) > 1 {
-					merchantCodeLine = strings.TrimSpace(merchantInfo[1])
+				for _, merchantInfo := range merchantInfos {
+					if len(merchantInfo) > 1 {
+						if merchantCodeLine == "未找到" {
+							merchantCodeLine = strings.TrimSpace(merchantInfo[1])
+						} else {
+							merchantCodeLine = merchantCodeLine + " " + strings.TrimSpace(merchantInfo[1])
+						}
+
+					}
 				}
 
 				// 设置单元格内容
